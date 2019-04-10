@@ -235,7 +235,7 @@ let _ = Printf.printf "%d %d\n" v1 v2 // prints "1 2"
 Equality on the values of the type `'a queue` is determined by the
 equality defined on the underlying implementation type. For instance,
 with the above definitions, we will have that the expression `q = q4`
-will evaluate to `true` because after dequeueing twice from the queue
+will evaluate to `true` because after dequeuing twice from the queue
 `q2`, which contains two elements, we again obtain an empty queue.
 
 
@@ -376,7 +376,7 @@ contents is represented by the list `List.append q (List.rev r)` where
 If we want to dequeue from a queue whose `q` component is empty but
 whose `r` component is non-empty, then we simply set the `q` component
 of the queue to `List.rev r` and set the `r` component to the empty
-list. Then we can continue dequeueing from the front of the new `q`
+list. Then we can continue dequeuing from the front of the new `q`
 component. The following module implementation realizes this idea:
 
 
