@@ -351,13 +351,17 @@ large code bases as changes to the code base should be insulated from
 affecting large portions of the code.
 
 As a motivating example, suppose that we have a large system that uses
-our `Queue` module from above in many places. The implementation of
-`Queue` is not very efficient: the `enqueue` operation uses
-`List.append` to add the new element `x` at the end of the queue
-`q`. This operation is linear in the length of `q`. However, we would
-expect that both `enqueue` and `dequeue` operations run in constant
-time - at least amortized over all operations performed on the queue
-during execution of the program.
+our `Queue` module from above in many places. Note that the
+implementation of `Queue` is actually not very efficient: the
+`enqueue` operation uses `List.append` to add the new element `x` at
+the end of the queue `q`. This operation is linear in the length of
+`q`. However, we would expect that both `enqueue` and `dequeue`
+operations run in constant time - at least amortized over all
+operations performed on the queue during execution of the program. So
+let's try to make our implementation of the queue data structures and
+see whether we can do this in a way such that remaining code of the
+larger system that uses the `Queue` module does not need to be
+modified.
 
 We can improve our implementation of `Queue` by using a pair of two
 lists `(q, r)` to represent the queue contents rather than a single
@@ -483,11 +487,11 @@ The OCaml compiler compiles the source code files one at a time. If a
 source code file `bar.ml` refers to a member defined in module
 `foo.ml`, then `foo.ml` is compiled before `bar.ml`. This also means
 that if `bar.ml` depends on `foo.ml`, then `foo.ml` cannot in turn
-also depend on `bar.ml`: the top-level module dependency graph must be
-acyclic. OCaml allows cyclic dependencies using (recursive
-modules)[https://caml.inria.fr/pub/docs/manual-ocaml/extn.html#sec236]. However,
-in this case the two interdependent modules need to be defined in a
-single source code file.
+also depend on `bar.ml`; the top-level module dependency graph must be
+acyclic. OCaml allows cyclic dependencies using [recursive module
+definitions](https://caml.inria.fr/pub/docs/manual-ocaml/extn.html#sec236).
+However, in this case the two interdependent modules need to be
+defined in a single source code file.
 
 The signature of the implicit module `Foo` associated with a source
 code file `foo.ml` can be defined in the dedicated signature file
@@ -522,8 +526,8 @@ let rec dequeue = function
   | x :: q, r -> Some (x, (q, r))
 ```
 
-In addition, we provide the module signature of the module defined by
-`queue.ml` in the associated `queue.mli` file:
+In addition, we can provide the module signature of the module defined by
+`queue.ml` in thean associated file called `queue.mli`:
 
 ```ocaml
 (** queue.mli *)
@@ -561,13 +565,13 @@ ordered set.
 
 A priority queue provides the following operations:
 
-* create an empty priority queue.
+* create an empty priority queue,
 
-* insert a new pair `(p, v)` into the queue
+* insert a new pair `(p, v)` into the queue,
 
-* retrieve the element `v` with the smallest priority from the queue
+* retrieve the element `v` with the smallest priority from the queue, and
 
-* remove the element with the smallest priority from the queue
+* remove the element with the smallest priority from the queue.
 
 This data structure is crucial for many algorithms (e.g. Dijkstra's
 algorithm for computing the shortest paths in a graph).
