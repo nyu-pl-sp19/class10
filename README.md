@@ -87,14 +87,14 @@ languages (sometimes significantly). Examples:
 
 * OCaml: modules and functors
 
-Important question in the design of a module system for a programming
+Important questions in the design of a module system for a programming
 language include:
 
 * How are the public interface and private implementation specified?
 
 * How are dependencies between modules resolved?
 
-* How do the interfaces of similar models relate? Is there a notion of
+* How do the interfaces of similar modules relate? Is there a notion of
   module types?
 
 * What are the naming conventions of imported entities?
@@ -106,6 +106,8 @@ language include:
 * Must names be explicitly imported from outside modules (*closed
   modules*) or are they accessible by default (*open modules*).
 
+* Can modules parameterize over other modules?
+
 We will explore two points in this design space over the next three
 weeks (OCaml modules, today), and Scala's classes and objects (next
 week and the week after that).
@@ -114,7 +116,7 @@ week and the week after that).
 
 OCaml's module system consists of a second language layer that sits on
 top of OCaml's language for program expressions (for defining values,
-including functions). An OCaml program is structured into a set of
+which includes functions). An OCaml program is structured into a set of
 modules that may depend on each other. Each module consists of a
 module signature and a module implementation.
 
@@ -132,11 +134,11 @@ FIFO queues. Such queues support the following operations:
 
 * check whether a given queue is empty
 
-* enqueue an element into a queue, yielding the a queue with the added
+* enqueue an element into a queue, yielding a new queue with the added
   element
 
 * dequeue an element from the queue, yielding the dequeued element and
-  the new queue with that element removed.
+  a new queue with that element removed.
 
 ```ocaml
 module type QueueType =
@@ -145,8 +147,7 @@ module type QueueType =
     val empty : 'a queue
     val is_empty : 'a queue -> bool
     val enqueue : 'a -> 'a queue -> 'a queue
-    val dequeue : 'a queue -> 'a * 'a queue
-    exception Empty
+    val dequeue : 'a queue -> ('a * 'a queue) option
   end
 ```
 
@@ -186,8 +187,8 @@ module Queue : QueueType =
       List.append q [x]
         
     let dequeue = function
-      | [] -> raise Empty
-      | x :: q -> x, q
+      | [] -> None
+      | x :: q -> Some (x, q)
   end
 ```
 
@@ -224,9 +225,9 @@ let q1 = Queue.enqueue 1 q
 
 let q2 = Queue.enqueue 2 q1
 
-let v1, q3 = Queue.dequeue q2
+let v1, q3 = Queue.dequeue q2 |> Opt.get
 
-let v2, q4 = Queue.dequeue q3
+let v2, q4 = Queue.dequeue q3 |> Opt.get
 
 let _ = Printf.printf "%d %d\n" v1 v2 // prints "1 2"
 ```
@@ -263,9 +264,9 @@ let q1 = enqueue 1 q
 
 let q2 = enqueue 2 q1
 
-let v1, q3 = dequeue q2
+let v1, q3 = dequeue q2 |> Opt.get
 
-let v2, q4 = dequeue q3
+let v2, q4 = dequeue q3 |> Opt.get
 
 let _ = Printf.printf "%d %d\n" v1 v2 // prints "1 2"
 ```
@@ -384,8 +385,7 @@ component. The following module implementation realizes this idea:
 module Queue : QueueType =
   struct
     type 'a queue = 'a list * 'a list
-    exception Empty
-    
+
     let empty =
       [], []
 
@@ -396,9 +396,9 @@ module Queue : QueueType =
       q, x :: r
     
     let rec dequeue = function
-      | [], [] -> raise Empty
+      | [], [] -> None
       | [], r -> dequeue (List.rev r, [])
-      | x :: q, r -> x, (q, r)
+      | x :: q, r -> Some (x, (q, r))
   end
 ```
 
@@ -435,8 +435,7 @@ module type QueueType =
     val empty : 'a queue
     val is_empty : 'a queue -> bool
     val enqueue : 'a -> 'a queue -> 'a queue
-    val dequeue : 'a queue -> 'a * 'a queue
-    exception Empty
+    val dequeue : 'a queue -> ('a * 'a queue) option
   end
 ```
 
@@ -448,8 +447,6 @@ signature that the module implements:
 module Queue =
   struct
     type 'a queue = 'a list * 'a list
-    exception Empty
-    
     let empty =
       [], []
 
@@ -460,9 +457,9 @@ module Queue =
       q, x :: r
     
     let rec dequeue = function
-      | [], [] -> raise Empty
+      | [], [] -> None
       | [], r -> dequeue (List.rev r, [])
-      | x :: q, r -> x, (q, r)
+      | x :: q, r -> Some (x, (q, r))
   end
 ```
 
@@ -515,8 +512,6 @@ the queue module directly at the top-level of `queue.ml`:
 (** queue.ml *)
 type 'a queue = 'a list * 'a list
 
-exception Empty
-        
 let empty =
   [], []
 
@@ -527,9 +522,9 @@ let enqueue x (q, r) =
   q, x :: r
     
 let rec dequeue = function
-  | [], [] -> raise Empty
+  | [], [] -> None
   | [], r -> dequeue (List.rev r, [])
-  | x :: q, r -> x, (q, r)
+  | x :: q, r -> Some (x, (q, r))
 ```
 
 In addition, we provide the module signature of the module defined by
@@ -540,15 +535,13 @@ In addition, we provide the module signature of the module defined by
 
 type 'a queue
 
-exception Empty
-
 val empty : 'a queue
 
 val is_empty : 'a queue -> bool
 
 val enqueue : 'a -> 'a queue -> 'a queue
 
-val dequeue : 'a queue -> 'a * 'a queue
+val dequeue : 'a queue -> ('a * 'a queue) option
 ```
 
 This way, we can e.g. access `empty` in other source code files using
