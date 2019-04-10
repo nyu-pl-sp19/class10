@@ -324,10 +324,8 @@ the fact that `'a Queue.queue` is implemented as a list:
 
 ```ocaml
 let print_int_queue (q: int Queue.queue) =
-  let rec pr = function
-  | match q with
+  let rec pr q = match q with
   | [] -> ()
-  | x :: [] -> print_int x
   | x :: q1 -> print_int x; print_string ", "; pr q1
   in 
   pr q
@@ -338,12 +336,9 @@ Instead, this code would have to written in terms of the members of
 
 ```ocaml
 let print_int_queue (q: int Queue.queue) =
-  let rec pr = function
-    if Queue.is_empty q then () else
-    let x, q1 = Queue.dequeue q in
-    print_int x;
-    if Queue.is_empty q1 then () else
-    print_string ", "; pr q1
+  let rec pr q = match dequeue q with
+  | None -> ()
+  | Some (x, q1) -> print_int x; print_string ", "; pr q1
   in
   pr q
 ```
