@@ -871,6 +871,8 @@ module IntIncPrioQueue = MakePrioQueue(struct
 end)
 ```
 
+#### Establishing type equalities in functor definitions
+
 One problem with the implementation of our functor is that, while we can create an empty priority queue, we can't actually insert any elements into it:
 
 ```ocaml
