@@ -634,7 +634,7 @@ module PrioQueue : PrioQueueType =
     let insert q p v =
       let rec ins = function
         | [] -> [(p, v)]
-        | (p1, v1) :: q1 ->
+        | (p1, v1) :: q1 as q ->
             if compare p p1 < 0 (* p < p1 ? *)
             then (p, v) :: q
             else (p1, v1) :: ins q1
